@@ -1,0 +1,121 @@
+.big-number {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.section-title {
+    margin-top: 50px;
+    margin-bottom: 15px;
+}
+
+.chart-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 25px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+}
+
+.alert-card {
+    border: 1px solid rgba(255, 99, 71, 0.4);
+}
+
+.ai-insight {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 99, 71, 0.1);
+    border: 1px solid rgba(255, 99, 71, 0.3);
+    border-radius: 12px;
+}
+.pdf-btn {
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.filter-bar select {
+    padding: 10px;
+    border-radius: 8px;
+    background: #111;
+    color: white;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.big-number {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.section-title {
+    margin-top: 50px;
+    margin-bottom: 15px;
+}
+
+.chart-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 25px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+}
+
+.alert-card {
+    border: 1px solid rgba(255, 99, 71, 0.4);
+}
+
+.ai-insight {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 99, 71, 0.1);
+    border: 1px solid rgba(255, 99, 71, 0.3);
+    border-radius: 12px;
+}
+.stat-card {
+    position: relative;
+    background: linear-gradient(145deg,
+            rgba(59, 130, 246, 0.08),
+            rgba(255, 255, 255, 0.03));
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    padding: 30px;
+    border-radius: 18px;
+    backdrop-filter: blur(18px);
+    transition: all 0.35s ease;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent);
+    top: -40px;
+    right: -40px;
+    filter: blur(50px);
+}
+
+.stat-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+}
+.dashboard-content {
+    animation: pageFade 0.8s ease forwards;
+    opacity: 0;
+    transform: translateY(15px);
+}
+
+@keyframes pageFade {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

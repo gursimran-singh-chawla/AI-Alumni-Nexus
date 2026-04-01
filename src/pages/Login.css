@@ -1,0 +1,8 @@
+.auth-left h1 {
+    font-size: 36px;
+    line-height: 1.3;
+}
+
+.auth-card input {
+    margin-bottom: 16px;
+}
