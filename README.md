@@ -1,16 +1,73 @@
-# React + Vite
+# AI Alumni Nexus
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React/Vite web application prototype for an alumni platform. The project focuses on the product experience around alumni discovery, authentication, dashboards, administration and a social-style feed.
 
-Currently, two official plugins are available:
+> This repository is a front-end prototype. It is intentionally documented as a prototype rather than presented as a production-ready system.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## React Compiler
+- Landing page and product overview
+- Login and signup flows
+- Alumni dashboard
+- Admin dashboard
+- Alumni feed
+- Client-side routing
+- Dashboard-style data visualisation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the ESLint configuration
+- React
+- Vite
+- JavaScript (JSX)
+- React Router
+- Recharts
+- html2canvas
+- jsPDF
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Project structure
+
+```text
+src/
+├── components/
+├── pages/
+├── routes/
+├── styles/
+├── assets/
+├── App.jsx
+└── main.jsx
+```
+
+## Run locally
+
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+### Setup
+
+```bash
+git clone https://github.com/00believer00/AI-Alumni-Nexus.git
+cd AI-Alumni-Nexus
+npm install
+npm run dev
+```
+
+For a production build:
+
+```bash
+npm run build
+```
+
+## Why I built it
+
+The project was developed as part of my CSE capstone work to explore how an alumni platform could combine structured dashboards with a community-oriented interface.
+
+## Status
+
+Prototype / academic project. Further work would include a production API, persistent authentication, role-based authorization, database integration, tests, and deployment automation.
+
+## Author
+
+Gursimran Singh Chawla  
+[GitHub](https://github.com/00believer00)
