@@ -91,6 +91,7 @@ export const api = {
   markAllNotificationsRead: () => ax.put("/api/notifications/mark-all/read"),
   deleteNotification: (id) => ax.delete(`/api/notifications/${id}`),
   deleteNotificationsBatch: (ids) => ax.delete("/api/notifications/batch", { data: { ids } }),
+  clearAllNotifications: () => ax.delete("/api/notifications/clear-all"),
 
   getMentors: (params) => ax.get("/api/mentorship/mentors", { params }),
   getMentorSuggestions: () => ax.get("/api/mentorship/suggestions"),
@@ -104,6 +105,7 @@ export const api = {
   getOpportunities: (params) => ax.get("/api/opportunities", { params }),
   createOpportunity: (d) => ax.post("/api/opportunities", d),
   applyOpportunity: (id, d) => ax.post(`/api/opportunities/${id}/apply`, d),
+  deleteOpportunity: (id) => ax.delete(`/api/opportunities/${id}`),
   getMyPostedOpportunities: (params) => ax.get("/api/opportunities/mine/posted", { params }),
   getMyApplications: (params) => ax.get("/api/opportunities/mine/applications", { params }),
   getOpportunityApplications: (id, params) => ax.get(`/api/opportunities/${id}/applications`, { params }),

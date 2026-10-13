@@ -6,25 +6,38 @@ import { getNotificationBadgeType } from "../utils/badgeHelper";
 import { api } from "../api";
 import toast from "react-hot-toast";
 
-// Notification type mapping
+// Notification type mapping matching backend schema
 const NOTIFICATION_TYPES = {
-  mention: "Mention",
-  message: "Message",
-  event: "Event",
-  opportunity: "Opportunity",
-  mentorship: "Mentorship",
-  post: "Post",
+  new_message: "Message",
+  mentorship_request: "Mentorship Request",
+  mentorship_accepted: "Mentorship Accepted",
+  mentorship_rejected: "Mentorship Rejected",
+  new_opportunity: "Opportunity",
+  application_status: "Application Update",
+  new_event: "Event",
+  profile_viewed: "Profile View",
   system: "System"
 };
 
 const NOTIFICATION_TYPE_COLORS = {
-  mention: "🏷️",
-  message: "💬",
-  event: "📅",
-  opportunity: "💼",
-  mentorship: "🤝",
-  post: "📰",
+  new_message: "💬",
+  mentorship_request: "🤝",
+  mentorship_accepted: "✅",
+  mentorship_rejected: "❌",
+  new_opportunity: "💼",
+  application_status: "📋",
+  new_event: "📅",
+  profile_viewed: "👀",
   system: "⚙️"
+};
+
+const FILTER_CATEGORY_MAP = {
+  mentorship: ["mentorship_request", "mentorship_accepted", "mentorship_rejected"],
+  opportunity: ["new_opportunity", "application_status"],
+  message: ["new_message"],
+  event: ["new_event"],
+  profile: ["profile_viewed"],
+  system: ["system"]
 };
 
 export default function Notifications() {
@@ -92,8 +105,11 @@ export default function Notifications() {
   // Apply filters
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
-      // Type filter
-      if (filters.type && n.type !== filters.type) return false;
+      // Type / Category filter
+      if (filters.type) {
+        const allowed = FILTER_CATEGORY_MAP[filters.type] || [filters.type];
+        if (!allowed.includes(n.type)) return false;
+      }
 
       // Read status filter
       if (filters.readStatus === "read" && !n.read) return false;
@@ -197,6 +213,35 @@ export default function Notifications() {
     }
   };
 
+  const deleteSingle = async (id) => {
+    try {
+      await api.deleteNotification(id);
+      setNotifications((prev) => prev.filter((x) => x._id !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      toast.success("Notification deleted");
+    } catch (e) {
+      toast.error(e.message || "Failed to delete notification");
+    }
+  };
+
+  const clearAll = async () => {
+    if (notifications.length === 0) return toast("No notifications to clear");
+    if (!confirm("Are you sure you want to clear ALL notifications?")) return;
+    try {
+      await api.clearAllNotifications();
+      setNotifications([]);
+      setSelectedIds(new Set());
+      setSelectAll(false);
+      toast.success("All notifications cleared");
+    } catch (e) {
+      toast.error(e.message || "Failed to clear notifications");
+    }
+  };
+
   const deleteSelected = async () => {
     if (selectedIds.size === 0) {
       toast.error("No notifications selected");
@@ -247,6 +292,14 @@ export default function Notifications() {
               <button className="btn btn-outline btn-sm" onClick={markAllRead}>
                 Mark all as read
               </button>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={clearAll}
+                style={{ color: "var(--danger)" }}
+                title="Clear all notifications"
+              >
+                Clear all
+              </button>
             </div>
           </div>
 
@@ -255,19 +308,20 @@ export default function Notifications() {
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
               <div style={{ flex: 1, minWidth: 150 }}>
                 <label style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500, display: "block", marginBottom: 6 }}>
-                  Type
+                  Category
                 </label>
                 <select
                   value={filters.type}
                   onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                   style={{ width: "100%" }}
                 >
-                  <option value="">All types</option>
-                  {Object.entries(NOTIFICATION_TYPES).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
+                  <option value="">All categories</option>
+                  <option value="mentorship">Mentorship</option>
+                  <option value="opportunity">Opportunities</option>
+                  <option value="message">Messages</option>
+                  <option value="event">Events</option>
+                  <option value="profile">Profile Views</option>
+                  <option value="system">System</option>
                 </select>
               </div>
 
@@ -425,13 +479,22 @@ export default function Notifications() {
                   </div>
 
                   {/* Actions */}
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={() => toggleRead(n)}
-                    style={{ flexShrink: 0, marginTop: 2 }}
-                  >
-                    {n.read ? "Unread" : "Read"}
-                  </button>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 2 }}>
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={() => toggleRead(n)}
+                    >
+                      {n.read ? "Unread" : "Read"}
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={() => deleteSingle(n._id)}
+                      title="Delete notification"
+                      style={{ color: "var(--danger)", padding: "4px 8px" }}
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

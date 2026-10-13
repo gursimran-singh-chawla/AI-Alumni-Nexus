@@ -46,6 +46,17 @@ const BADGE_COLOR_MAP = {
   // Notification read status
   'notification-read': 'badge-gray',
   'notification-unread': 'badge-blue',
+
+  // Notification types
+  'notification-new_message': 'badge-blue',
+  'notification-mentorship_request': 'badge-yellow',
+  'notification-mentorship_accepted': 'badge-green',
+  'notification-mentorship_rejected': 'badge-red',
+  'notification-new_event': 'badge-purple',
+  'notification-new_opportunity': 'badge-blue',
+  'notification-profile_viewed': 'badge-purple',
+  'notification-application_status': 'badge-blue',
+  'notification-system': 'badge-gray',
 };
 
 // Mapping of badge types to human-readable labels
@@ -78,6 +89,15 @@ const BADGE_LABEL_MAP = {
   'post-archived': 'Archived',
   'notification-read': 'Read',
   'notification-unread': 'Unread',
+  'notification-new_message': 'Message',
+  'notification-mentorship_request': 'Mentorship Request',
+  'notification-mentorship_accepted': 'Mentorship Accepted',
+  'notification-mentorship_rejected': 'Mentorship Rejected',
+  'notification-new_event': 'Event',
+  'notification-new_opportunity': 'Opportunity',
+  'notification-profile_viewed': 'Profile View',
+  'notification-application_status': 'Application Update',
+  'notification-system': 'System',
 };
 
 /**

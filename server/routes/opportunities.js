@@ -169,4 +169,20 @@ router.put(
   }
 );
 
+router.delete("/:id", verifyToken, requireVerifiedAlumni, async (req, res) => {
+  const opportunity = await Opportunity.findById(req.params.id);
+  if (!opportunity) return res.status(404).json({ message: "Opportunity not found" });
+
+  if (opportunity.postedBy.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+    return res.status(403).json({ message: "Not authorized to delete this opportunity" });
+  }
+
+  await Promise.all([
+    Opportunity.findByIdAndDelete(req.params.id),
+    OpportunityApplication.deleteMany({ opportunity: req.params.id })
+  ]);
+
+  res.json({ message: "Opportunity deleted successfully" });
+});
+
 export default router;

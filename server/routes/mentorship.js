@@ -86,9 +86,26 @@ router.post(
   async (req, res) => {
     const { mentorId, requestedSlot, communicationMethod, agenda = "" } = req.body;
 
+    if (req.user._id.toString() === mentorId.toString()) {
+      return res.status(400).json({ message: "Cannot book mentorship session with yourself" });
+    }
+
     const mentor = await User.findById(mentorId);
     if (!mentor || mentor.role !== "alumni" || mentor.verificationStatus !== "verified") {
       return res.status(404).json({ message: "Mentor unavailable" });
+    }
+
+    if (mentor.mentorAvailabilityStatus === "unavailable") {
+      return res.status(400).json({ message: "Mentor is currently unavailable for bookings" });
+    }
+
+    const existingSlot = await MentorshipSession.findOne({
+      mentor: mentorId,
+      requestedSlot,
+      status: { $in: ["requested", "accepted", "upcoming"] }
+    });
+    if (existingSlot) {
+      return res.status(400).json({ message: "This mentor already has a session requested or booked for this time slot" });
     }
 
     const session = await MentorshipSession.create({

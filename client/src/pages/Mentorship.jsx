@@ -16,6 +16,8 @@ export default function Mentorship() {
   const [method, setMethod] = useState("in_app");
   const [agenda, setAgenda] = useState("");
   const [availabilityStatus, setAvailabilityStatus] = useState(user?.mentorAvailabilityStatus || "unavailable");
+  const [feedbackSession, setFeedbackSession] = useState(null);
+  const [feedbackForm, setFeedbackForm] = useState({ rating: 5, comment: "" });
   
   // Filters
   const [filters, setFilters] = useState({
@@ -89,7 +91,7 @@ export default function Mentorship() {
 
   const respond = async (sessionId, decision) => {
     try {
-      await api.respondMentorshipSession(sessionId, { decision, scheduledAt: slot || undefined });
+      await api.respondMentorshipSession(sessionId, { decision });
       toast.success(`Session ${decision}ed`);
       load();
     } catch (e) {
@@ -107,13 +109,17 @@ export default function Mentorship() {
     }
   };
 
-  const submitFeedback = async (sessionId) => {
-    const rating = Number(prompt("Rate this session (1-5)") || 0);
-    const comment = prompt("Any feedback?") || "";
-    if (!rating || rating < 1 || rating > 5) return;
+  const openFeedbackModal = (session) => {
+    setFeedbackSession(session);
+    setFeedbackForm({ rating: 5, comment: "" });
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackSession) return;
     try {
-      await api.submitSessionFeedback(sessionId, { rating, comment });
+      await api.submitSessionFeedback(feedbackSession._id, feedbackForm);
       toast.success("Feedback submitted");
+      setFeedbackSession(null);
       load();
     } catch (e) {
       toast.error(e.message);
@@ -248,7 +254,9 @@ export default function Mentorship() {
                           )}
                           {s.status === "upcoming" && <button className="btn btn-sm btn-outline" onClick={() => updateStatus(s._id, "completed")}>Complete</button>}
                           {s.status === "upcoming" && <button className="btn btn-sm btn-outline" onClick={() => updateStatus(s._id, "cancelled")}>Cancel</button>}
-                          {s.status === "completed" && !s.feedback?.rating && !isMentor && <button className="btn btn-sm btn-outline" onClick={() => submitFeedback(s._id)}>Rate</button>}
+                          {s.status === "completed" && !s.feedback?.rating && !isMentor && (
+                            <button className="btn btn-sm btn-outline" onClick={() => openFeedbackModal(s)}>Rate</button>
+                          )}
                         </div>
                       </div>
                     );
@@ -257,6 +265,58 @@ export default function Mentorship() {
               </div>
             ))}
           </div>
+
+          {/* Feedback Modal */}
+          {feedbackSession && (
+            <div className="modal-overlay" onClick={() => setFeedbackSession(null)}>
+              <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+                <div className="modal-header">
+                  <h3 style={{ fontSize: 18, fontWeight: 600 }}>Rate Mentorship Session</h3>
+                  <button className="modal-close" onClick={() => setFeedbackSession(null)}>✕</button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14, margin: "16px 0" }}>
+                  <div>
+                    <label style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500, display: "block", marginBottom: 6 }}>
+                      Rating (1-5 stars)
+                    </label>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          className="btn btn-sm"
+                          style={{
+                            background: feedbackForm.rating >= star ? "rgba(245,158,11,0.2)" : "var(--bg3)",
+                            color: feedbackForm.rating >= star ? "var(--warning)" : "var(--text3)",
+                            border: feedbackForm.rating >= star ? "1px solid var(--warning)" : "1px solid var(--border)",
+                            fontSize: 16
+                          }}
+                          onClick={() => setFeedbackForm({ ...feedbackForm, rating: star })}
+                        >
+                          ⭐ {star}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500, display: "block", marginBottom: 6 }}>
+                      Feedback / Comments (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Share what went well or how the mentor helped you..."
+                      value={feedbackForm.comment}
+                      onChange={(e) => setFeedbackForm({ ...feedbackForm, comment: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <button className="btn btn-outline" onClick={() => setFeedbackSession(null)}>Cancel</button>
+                  <button className="btn btn-primary" onClick={handleFeedbackSubmit}>Submit Feedback</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

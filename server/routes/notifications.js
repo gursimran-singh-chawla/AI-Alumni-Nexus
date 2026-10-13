@@ -65,6 +65,15 @@ router.delete("/batch", verifyToken, async (req, res) => {
   }
 });
 
+router.delete("/clear-all", verifyToken, async (req, res) => {
+  try {
+    const result = await Notification.deleteMany({ user: req.user._id });
+    res.json({ message: `Cleared all ${result.deletedCount} notifications`, deletedCount: result.deletedCount });
+  } catch {
+    res.status(500).json({ message: "Failed to clear notifications" });
+  }
+});
+
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const result = await Notification.deleteOne({ _id: req.params.id, user: req.user._id });

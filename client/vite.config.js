@@ -10,5 +10,16 @@ export default defineConfig({
       "/api": "http://localhost:5000",
       "/socket.io": { target: "http://localhost:5000", ws: true }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          charts: ["recharts"],
+          socket: ["socket.io-client"]
+        }
+      }
+    }
   }
 });

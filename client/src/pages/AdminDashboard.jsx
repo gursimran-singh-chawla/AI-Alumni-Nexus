@@ -71,6 +71,17 @@ export default function AdminDashboard() {
     }
   };
 
+  const deleteEvent = async (id) => {
+    if (!confirm("Are you sure you want to delete this event?")) return;
+    try {
+      await api.deleteEvent(id);
+      setEvents((prev) => prev.filter((x) => x._id !== id));
+      toast.success("Event deleted");
+    } catch (e) {
+      toast.error(e.message || "Failed to delete event");
+    }
+  };
+
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>;
 
   const TABS = ["overview", "users", "verification", "events"];
@@ -183,9 +194,19 @@ export default function AdminDashboard() {
               <div className="card">
                 <div className="section-title" style={{ marginBottom: 12 }}>All Events ({events.length})</div>
                 {events.map((e) => (
-                  <div key={e._id} style={{ borderBottom: "1px solid var(--border)", paddingBottom: 10, marginBottom: 10 }}>
-                    <div style={{ fontWeight: 600 }}>{e.title}</div>
-                    <div style={{ fontSize: 12, color: "var(--text3)" }}>{new Date(e.date).toLocaleString()} · {e.location}</div>
+                  <div key={e._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border)", paddingBottom: 10, marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{e.title}</div>
+                      <div style={{ fontSize: 12, color: "var(--text3)" }}>{new Date(e.date).toLocaleString()} · {e.location}</div>
+                    </div>
+                    <button
+                      className="btn btn-sm btn-outline"
+                      style={{ color: "var(--danger)" }}
+                      onClick={() => deleteEvent(e._id)}
+                      title="Delete event"
+                    >
+                      🗑
+                    </button>
                   </div>
                 ))}
               </div>

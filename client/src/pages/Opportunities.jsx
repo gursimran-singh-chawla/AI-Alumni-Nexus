@@ -99,6 +99,17 @@ export default function Opportunities() {
     }
   };
 
+  const deleteOpp = async (oppId) => {
+    if (!confirm("Are you sure you want to delete this opportunity? All applications will also be deleted.")) return;
+    try {
+      await api.deleteOpportunity(oppId);
+      toast.success("Opportunity deleted");
+      load();
+    } catch (e) {
+      toast.error(e.message || "Failed to delete opportunity");
+    }
+  };
+
   const hasApplied = (id) => myApps.some((a) => a.opportunity?._id === id || a.opportunity === id);
   const getApplicationStatus = (id) => myApps.find((a) => a.opportunity?._id === id || a.opportunity === id)?.status;
 
@@ -124,11 +135,13 @@ export default function Opportunities() {
       // Application status filter
       if (filters.applicationStatus && user?.role === "student") {
         const appStatus = getApplicationStatus(o._id);
-        if (filters.applicationStatus === "applied" && !appStatus) return false;
-        if (filters.applicationStatus === "not-applied" && appStatus) return false;
-        if (appStatus && filters.applicationStatus !== "applied" && filters.applicationStatus !== appStatus) {
-          // If filtering by specific status (reviewing, accepted, rejected)
-          return appStatus === filters.applicationStatus;
+        if (filters.applicationStatus === "applied") {
+          if (!appStatus) return false;
+        } else if (filters.applicationStatus === "not-applied") {
+          if (appStatus) return false;
+        } else {
+          // Specific status filter (e.g. reviewing, shortlisted, selected, rejected)
+          if (appStatus !== filters.applicationStatus) return false;
         }
       }
 
@@ -218,7 +231,8 @@ export default function Opportunities() {
                       <option value="applied">Applied</option>
                       <option value="not-applied">Not applied</option>
                       <option value="reviewing">Under Review</option>
-                      <option value="accepted">Accepted</option>
+                      <option value="shortlisted">Shortlisted</option>
+                      <option value="selected">Selected</option>
                       <option value="rejected">Rejected</option>
                     </select>
                   </div>
@@ -285,12 +299,22 @@ export default function Opportunities() {
                         <div style={{ fontWeight: 600 }}>{p.title}</div>
                         <div style={{ fontSize: 12, color: "var(--text3)" }}>{p.company} · {p.location} · {p.type}</div>
                       </div>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        onClick={() => viewApplications(p._id)}
-                      >
-                        {selectedOppForReview === p._id ? "Hide Applicants" : "Review Applicants"}
-                      </button>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          onClick={() => viewApplications(p._id)}
+                        >
+                          {selectedOppForReview === p._id ? "Hide Applicants" : "Review Applicants"}
+                        </button>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          style={{ color: "var(--danger)" }}
+                          onClick={() => deleteOpp(p._id)}
+                          title="Delete opportunity"
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </div>
 
                     {selectedOppForReview === p._id && (

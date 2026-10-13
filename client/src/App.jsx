@@ -49,6 +49,7 @@ function App() {
           <Route path="/mentorship" element={<PrivateRoute><Mentorship /></PrivateRoute>} />
           <Route path="/opportunities" element={<PrivateRoute><Opportunities /></PrivateRoute>} />
           <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </LayoutProvider>
     </BrowserRouter>

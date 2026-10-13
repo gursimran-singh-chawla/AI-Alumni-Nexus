@@ -26,6 +26,7 @@ export default function MockInterview() {
 
   const submitAnswer = async () => {
     if (!answer.trim()) return toast.error("Please provide an answer");
+    if (evaluating || feedback) return;
     setEvaluating(true);
     try {
       const q = session.questions[current];
@@ -126,9 +127,9 @@ export default function MockInterview() {
               </div>
 
               <div className="card">
-                <textarea rows={6} placeholder="Type your answer here... Take your time to think before answering." value={answer} onChange={(e) => setAnswer(e.target.value)} style={{ marginBottom: 12 }} />
-                <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={submitAnswer} disabled={evaluating || !answer.trim()}>
-                  {evaluating ? "⏳ Evaluating..." : "Submit Answer"}
+                <textarea rows={6} placeholder="Type your answer here... Take your time to think before answering." value={answer} onChange={(e) => setAnswer(e.target.value)} disabled={evaluating || Boolean(feedback)} style={{ marginBottom: 12 }} />
+                <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={submitAnswer} disabled={evaluating || Boolean(feedback) || !answer.trim()}>
+                  {evaluating ? "⏳ Evaluating..." : feedback ? "Answer Evaluated ✓" : "Submit Answer"}
                 </button>
               </div>
 
