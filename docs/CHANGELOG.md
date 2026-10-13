@@ -128,17 +128,41 @@ Comprehensive root-cause remediation of 14 critical, major, and minor defects ac
 - **Resolution:** Safely removed `EventsPage.jsx` and `ProfilePage.jsx` after verifying they were not referenced by `App.jsx` or any active component.
 - **Verification:** Executed `npm run build`; verified 0 missing import errors.
 
-#### 14. Implemented 35-Assertion Automated Verification Suite
+#### 14. Implemented 48-Assertion Automated Verification Suite
 - **Defect ID:** TEST-01 (Quality Enhancement)
-- **Implementation:** Created `tests/api_verification.mjs` executing 35 automated checks covering:
+- **Implementation:** Expanded `tests/api_verification.mjs` executing 48 automated checks covering:
   - System healthcheck
   - Authentication (valid & invalid password, JWT issuance)
   - Role-based route protection (Admin vs Student access)
   - Alumni academic domain validation (.edu enforcement)
-  - Complete mentorship lifecycle (book -> accept -> complete -> feedback)
-  - Opportunities pipeline (post -> search -> apply -> review status)
-  - Feed interactions (create post, like, comment)
-  - In-app notification lifecycle (create, mark read, single delete, batch delete)
-  - Campus event RSVP
-  - AI Career Suite offline fallback execution
-- **Result:** **35 / 35 Passed (100% success rate)**.
+  - Complete mentorship lifecycle (book -> accept -> complete -> feedback, plus self-booking rejection & duplicate slot collisions)
+  - Opportunities pipeline (post -> search -> apply -> review status, student 403 delete guard, alumni delete, and application cascading cleanup)
+  - Feed interactions (create post, like, comment, and bidirectional connection request & accept)
+  - In-app notification lifecycle (create, mark read, single delete, batch delete, and bulk clear-all)
+  - Campus event RSVP and Admin event lifecycle (admin create, student 403 delete guard, admin delete)
+  - AI Career Suite offline fallback execution (skills analysis, personalized roadmap, mock interview, scoring, resume review)
+- **Result:** **48 / 48 Passed (100% success rate)**.
+
+#### 15. Notification Badge Fallbacks & Missing Notification Enums
+- **Defect ID:** BUG-15 (Severity: Visual / Polish)
+- **Resolution:** Added all 9 notification types (`notification-new_message`, `notification-mentorship_request`, `notification-mentorship_accepted`, `notification-mentorship_rejected`, `notification-new_event`, `notification-new_opportunity`, `notification-profile_viewed`, `notification-application_status`, `notification-system`) to `badgeHelper.js` with semantic colors and icons.
+
+#### 16. Missing Opportunity Deletion & Cascading Application Cleanup
+- **Defect ID:** BUG-16 (Severity: Major)
+- **Resolution:** Added `DELETE /api/opportunities/:id` route in `server/routes/opportunities.js` with ownership guards and cascading `OpportunityApplication.deleteMany` cleanup. Added deletion button in `Opportunities.jsx`.
+
+#### 17. Mentorship Self-Booking & Duplicate Slot Prevention
+- **Defect ID:** BUG-17 (Severity: Major)
+- **Resolution:** Added server-side validation guards rejecting self-booking attempts (`req.user._id === mentorId`) with HTTP 400 and preventing overlapping active sessions for the exact same mentor and requested time slot.
+
+#### 18. Rollup Code-Splitting & Monolithic Vite Bundle Reduction
+- **Defect ID:** PERF-01 (Severity: Performance)
+- **Resolution:** Configured `manualChunks` in `client/vite.config.js` splitting bundles into `vendor` (React, Router, Axios), `charts` (Recharts), and `socket` (Socket.io Client). Dropped application main chunk from 740.99 kB down to 175.48 kB, completely eliminating the Vite build chunk size warning.
+
+#### 19. Mock Interview Duplicate Submission Guard
+- **Defect ID:** BUG-19 (Severity: State Management)
+- **Resolution:** Added `evaluating` guard and disabled submit controls during answer processing in `MockInterview.jsx` to prevent concurrent answer submissions and corrupted average score calculations.
+
+#### 20. Missing 404 Route Catch-All
+- **Defect ID:** BUG-20 (Severity: Navigation)
+- **Resolution:** Added `<Route path="*" element={<Navigate to="/" replace />} />` in `App.jsx` to gracefully redirect invalid URLs.

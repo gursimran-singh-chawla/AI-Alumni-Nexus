@@ -133,28 +133,65 @@ The audit uncovered several critical, functional, and UX defects across the appl
 - **Root Cause:** Artifacts of earlier prototyping.
 - **Remediation:** Clean or delete unreferenced files to ensure clean production builds and static analysis.
 
+### Bug 13: Notification Badge Fallbacks & Missing Notification Enums
+- **Severity:** P2 (Visual & UX Polish)
+- **Component:** `client/src/utils/badgeHelper.js`, `client/src/pages/Notifications.jsx`
+- **Symptom:** Notification cards for `new_message`, `mentorship_request`, `mentorship_accepted`, `mentorship_rejected`, `new_event`, `new_opportunity`, `profile_viewed`, `application_status`, and `system` displayed unstyled raw strings like `notification-mentorship_request`.
+- **Root Cause:** `badgeHelper.js` only defined badge styles for `opportunity-*` and `mentorship-*` prefixes, completely omitting all 9 `notification-*` event types.
+- **Remediation:** Added all 9 notification types to `BADGE_COLOR_MAP` and `BADGE_LABEL_MAP` with distinct color accents (emerald, violet, indigo, rose, amber, sky, slate).
+
+### Bug 14: Missing Bulk Notification Clear & Route Collision Risk
+- **Severity:** P1 (Functional Completeness & Routing)
+- **Component:** `server/routes/notifications.js`, `client/src/pages/Notifications.jsx`, `client/src/api.js`
+- **Symptom:** Users had no mechanism to clear all notifications at once. Furthermore, if a `clear-all` route was added after `/:id`, Express would mistake the string `"clear-all"` for an invalid MongoDB ObjectId, throwing an error.
+- **Root Cause:** Missing `DELETE /clear-all` route in backend; missing "Clear all" button in `Notifications.jsx`.
+- **Remediation:** Placed `router.delete("/clear-all")` strictly before `router.delete("/:id")`, implemented `deleteMany({ user: req.user._id })`, exported `clearAllNotifications` in `api.js`, and added individual trash dismissal and bulk clear actions in the UI.
+
+### Bug 15: Missing Opportunity Deletion & Cascading Application Cleanup
+- **Severity:** P1 (Data Integrity & Lifecycle)
+- **Component:** `server/routes/opportunities.js`, `client/src/pages/Opportunities.jsx`, `client/src/api.js`
+- **Symptom:** Alumni who posted job/internship opportunities had no way to delete expired or closed listings. Orphaned applications persisted in MongoDB indefinitely.
+- **Root Cause:** No `DELETE /api/opportunities/:id` route existed; frontend had no delete button for authors.
+- **Remediation:** Implemented `router.delete("/:id")` with ownership verification (`opportunity.postedBy === req.user._id || req.user.role === 'admin'`) and cascading `OpportunityApplication.deleteMany({ opportunity: req.params.id })`. Added delete button in `Opportunities.jsx`.
+
+### Bug 16: Mentorship Self-Booking & Duplicate Slot Collisions
+- **Severity:** P1 (Business Logic & Vulnerability)
+- **Component:** `server/routes/mentorship.js`
+- **Symptom:** Alumni could book mentorship sessions with themselves. Furthermore, multiple students could request the exact same mentor and time slot simultaneously, causing double-booking.
+- **Root Cause:** Missing validation guards checking `req.user._id === mentorId` and missing unique slot verification for active sessions (`requested`, `accepted`, `upcoming`).
+- **Remediation:** Added validation guard rejecting self-booking with HTTP 400 and query check preventing overlapping active sessions for identical mentor & slot timestamps.
+
+### Bug 17: Application Status Enum Mismatch in UI Filter
+- **Severity:** P2 (Functional Defect)
+- **Component:** `client/src/pages/Opportunities.jsx`
+- **Symptom:** Filtering applications by status "Accepted" returned 0 results even when an applicant was selected.
+- **Root Cause:** Backend schema `OpportunityApplication` uses enum `["applied", "reviewing", "shortlisted", "rejected", "selected"]`. Frontend filter dropdown used `accepted` instead of `selected`.
+- **Remediation:** Updated status options in `Opportunities.jsx` to accurately include `shortlisted` and `selected`.
+
+### Bug 18: Unbounded Mock Interview Answer Submission Race
+- **Severity:** P2 (State Race Condition)
+- **Component:** `client/src/pages/MockInterview.jsx`
+- **Symptom:** Rapidly clicking "Submit Answer" sent concurrent requests to `/api/ai/mock-interview/answer`, corrupting question indexing and score averages.
+- **Root Cause:** `submitAnswer` was not guarded by an `evaluating` state check, and textarea was not disabled during evaluation.
+- **Remediation:** Added `if (evaluating || feedback) return;` guard, and disabled textarea + submit button during processing.
+
+### Bug 19: Monolithic Client Bundle Warning (Vite Chunk Size > 740 kB)
+- **Severity:** P2 (Performance & Best Practices)
+- **Component:** `client/vite.config.js`
+- **Symptom:** Vite production build outputted a chunk size advisory warning: `dist/assets/index.js 740.99 kB │ gzip: 216 kB`.
+- **Root Cause:** Absence of Rollup `output.manualChunks` configuration bundled React, Lucide icons, Recharts, and Socket.io into a single monolithic bundle.
+- **Remediation:** Configured `manualChunks` in `vite.config.js` separating `vendor` (React, React Router DOM, Axios), `charts` (Recharts), and `socket` (Socket.io Client). Dropped main app chunk down to 175.48 kB (gzip 48 kB).
+
+### Bug 20: Missing 404 Catch-All Route
+- **Severity:** P3 (Routing Resilience)
+- **Component:** `client/src/App.jsx`
+- **Symptom:** Navigating to an undefined URL resulted in a completely blank page without navigation guidance.
+- **Root Cause:** No wildcard fallback route in React Router.
+- **Remediation:** Added `<Route path="*" element={<Navigate to="/" replace />} />`.
+
 ---
 
-## 4. Prioritized Remediation Roadmap
+## 4. Prioritized Remediation Roadmap (Completed)
 
-1. **Phase A (Core Functional & Runtime Fixes):**
-   - Mount `SocketProvider` in `client/src/main.jsx`.
-   - Fix `Mentorship.jsx` grouped sessions to display and manage `requested` sessions.
-   - Update `badgeHelper.js` with all missing badge types.
-   - Enhance `server/routes/users.js` with advanced alumni filters.
-   - Fix `server/routes/notifications.js` to implement DELETE endpoints and query filtering.
-   - Wire `api.deleteNotification` in `client/src/api.js`.
-2. **Phase B (Workflow & UX Completion):**
-   - Add Alumni Opportunity Application review and status management to `Opportunities.jsx`.
-   - Update `ChatPage.jsx` to use React Router `<Link>` and fix null safety in `messages.js`.
-   - Separate nested cards in `Feed.jsx`.
-   - Enhance `MockInterview.jsx` feedback flow on final question.
-   - Update `buildSafeUser` in `auth.js`.
-   - Polish `Events.jsx` with category filter buttons and search.
-3. **Phase C (AI & Backend Reliability):**
-   - Harden `callOpenAI` with `try...catch` and network resilience.
-4. **Phase D (Verification & GitHub Synchronization):**
-   - Run complete automated regression test suite (`tests/api_verification.mjs`).
-   - Run client production build (`vite build`).
-   - Create all comprehensive documentation files (`FEATURE_TEST_MATRIX.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `QUALITY_REPORT.md`, `README.md`).
-   - Initialize git, switch to dedicated branch `fix/ai-alumni-nexus-quality`, commit verified changes, and push to GitHub remote.
+All remediation phases (Phase A through Phase D) have been completed and verified with 48/48 automated regression tests passing and 0 build errors.
+

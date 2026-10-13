@@ -49,7 +49,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 25,
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX || (isDev ? 1000 : 25)),
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many authentication attempts. Try again later." }

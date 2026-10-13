@@ -16,8 +16,8 @@ The platform was initially hindered by a missing WebSocket context provider that
 
 Following targeted, sound engineering remediations:
 - **0 Fatal or Blocker Defects Remain.**
-- **35 of 35 Automated Test Checks Passed (100%).**
-- **Client Production Bundle builds with 0 errors across 938 modules.**
+- **49 of 49 Automated Test Checks Passed (100%).**
+- **Client Production Bundle builds with 0 errors across 938 modules (chunk size reduced from 740 kB to 175 kB via code-splitting).**
 - **All 23 Platform Features are verified functional.**
 
 ---
@@ -80,31 +80,34 @@ Status Key:
 ## 4. Test Execution & Verification Summary
 
 ### 4.1 Automated Backend Verification Suite (`tests/api_verification.mjs`)
-- **Total Assertions:** 35
-- **Passed:** 35
+- **Total Assertions:** 49
+- **Passed:** 49
 - **Failed:** 0
-- **Duration:** 2.8 seconds
+- **Duration:** 2.9 seconds
 - **Coverage Areas:**
   1. System Healthcheck (1 check)
   2. Authentication & Credential Security (4 checks)
   3. User Profiles & Role Protection (4 checks)
   4. Alumni Academic Domain Verification (2 checks)
-  5. Mentorship Lifecycle Workflow (5 checks)
-  6. Opportunities & Applications Workflow (5 checks)
-  7. Community Feed & Interactions (3 checks)
-  8. In-App Notification Center (5 checks)
-  9. Campus Events & Registration (2 checks)
-  10. AI Career Suite Offline Execution (4 checks)
+  5. Mentorship Lifecycle Workflow (7 checks — includes self-booking 400 rejection & duplicate slot collision guards)
+  6. Opportunities & Applications Workflow (8 checks — includes applicant status updates, student 403 delete guard, alumni delete, and application cascading cleanup)
+  7. Community Feed & Interactions (6 checks — includes post creation, like, comment, unique peer registration, and bidirectional connect/accept workflow)
+  8. In-App Notification Center (7 checks — includes single delete, batch delete, and bulk clear-all verification)
+  9. Campus Events & Registration (5 checks — includes event registration, admin event creation, student 403 delete guard, and admin delete)
+  10. AI Career Suite Offline Execution (5 checks — includes skill analysis, personalized learning roadmap, mock interview start, answer scoring, and resume review)
 
 ### 4.2 Frontend Production Build Verification
 - Command: `npm run build` (`vite build`) inside `client/`
 - Transformed Modules: 938
-- Bundle Sizes:
-  - `dist/index.html`: 0.59 kB
-  - `dist/assets/index.css`: 15.11 kB
-  - `dist/assets/index.js`: 740.99 kB
+- Bundle Sizes (with manual Rollup code-splitting):
+  - `dist/index.html`: 0.82 kB (gzip: 0.43 kB)
+  - `dist/assets/index.css`: 15.11 kB (gzip: 3.62 kB)
+  - `dist/assets/index.js`: 175.48 kB (gzip: 48.24 kB)
+  - `dist/assets/vendor.js`: 164.05 kB (gzip: 53.53 kB)
+  - `dist/assets/charts.js`: 364.37 kB (gzip: 101.02 kB)
+  - `dist/assets/socket.js`: 41.57 kB (gzip: 13.00 kB)
 - Compilation Errors: **0**
-- Syntax / Lint Warnings: None blocking.
+- Vite Chunk Size Warnings: **0** (monolithic 740 kB bundle eliminated)
 
 ---
 

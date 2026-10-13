@@ -136,19 +136,45 @@ const runSuite = async () => {
   });
   assert(mentorsList.status === 200 && Array.isArray(mentorsList.body.data), "Student can query verified mentors list");
 
+  // Guard: Mentorship rejects self-booking
+  const selfBooking = await req("/api/mentorship/sessions/request", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${alumniToken}` },
+    body: JSON.stringify({
+      mentorId: alumniId,
+      requestedSlot: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      communicationMethod: "in_app"
+    })
+  });
+  assert(selfBooking.status === 400 && selfBooking.body.message?.includes("yourself"), "Mentorship rejects self-booking attempt with HTTP 400");
+
   // Student requests mentorship session
+  const targetSlot = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
   const sessionReq = await req("/api/mentorship/sessions/request", {
     method: "POST",
     headers: { Authorization: `Bearer ${studentToken}` },
     body: JSON.stringify({
       mentorId: alumniId,
-      requestedSlot: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+      requestedSlot: targetSlot,
       communicationMethod: "in_app",
       agenda: "Guidance on backend microservices architecture and mock interview"
     })
   });
   assert(sessionReq.status === 201 && sessionReq.body._id, "Student successfully books mentorship request");
   const sessionId = sessionReq.body._id;
+
+  // Guard: Mentorship rejects duplicate booking for the same mentor and time slot
+  const dupBooking = await req("/api/mentorship/sessions/request", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${studentToken}` },
+    body: JSON.stringify({
+      mentorId: alumniId,
+      requestedSlot: targetSlot,
+      communicationMethod: "video_call",
+      agenda: "Duplicate slot request attempt"
+    })
+  });
+  assert(dupBooking.status === 400 && dupBooking.body.message?.includes("already has a session"), "Mentorship rejects duplicate slot booking on same mentor and time with HTTP 400");
 
   // Alumni accepts the session
   const sessionAccept = await req(`/api/mentorship/sessions/${sessionId}/respond`, {
@@ -224,6 +250,26 @@ const runSuite = async () => {
   });
   assert(updateAppStatus.status === 200 && updateAppStatus.body.application?.status === "shortlisted", "Alumni updates application status to 'shortlisted'");
 
+  // Guard: Student forbidden from deleting opportunity
+  const studentDeleteOpp = await req(`/api/opportunities/${opportunityId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${studentToken}` }
+  });
+  assert(studentDeleteOpp.status === 403, "Student is forbidden (HTTP 403) from deleting opportunities");
+
+  // Alumni deletes their posted opportunity
+  const alumniDeleteOpp = await req(`/api/opportunities/${opportunityId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${alumniToken}` }
+  });
+  assert(alumniDeleteOpp.status === 200, "Alumni successfully deletes posted opportunity via DELETE endpoint");
+
+  // Verify applications were cascade deleted with the opportunity
+  const checkDeletedOppApps = await req(`/api/opportunities/${opportunityId}/applications`, {
+    headers: { Authorization: `Bearer ${alumniToken}` }
+  });
+  assert(checkDeletedOppApps.status === 404, "Opportunity and cascading applications cleanly deleted (HTTP 404)");
+
   // 7. Community Feed & Interactive Posts
   console.log("\n--- 7. Community Feed & Posts ---");
   const postRes = await req("/api/posts", {
@@ -250,6 +296,34 @@ const runSuite = async () => {
     body: JSON.stringify({ text: "Congratulations Arjun! Keep up the great work." })
   });
   assert(commentRes.status === 200 && commentRes.body.text?.includes("Congratulations"), "Alumni comments on student post");
+
+  // Connection Workflow: create a fresh test peer user to verify connection handshake idempotently
+  const peerEmail = `peer.${Date.now()}@nexus.com`;
+  const peerReg = await req("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify({
+      fullName: "Peer Student",
+      email: peerEmail,
+      password: "password123",
+      role: "student"
+    })
+  });
+  assert(peerReg.status === 201 && peerReg.body.token, "Register unique peer student for connection workflow");
+  const peerId = peerReg.body.user._id;
+  const peerToken = peerReg.body.token;
+
+  const connectRes = await req(`/api/users/${peerId}/connect`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${studentToken}` }
+  });
+  assert(connectRes.status === 200 && connectRes.body.message?.includes("Connection"), "Student initiates connection request to peer user");
+
+  // Peer accepts the connection request
+  const acceptRes = await req(`/api/users/${studentId}/accept`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${peerToken}` }
+  });
+  assert(acceptRes.status === 200 && acceptRes.body.message?.includes("Connected"), "Peer user accepts student's connection request");
 
   // 8. Notifications System & Deletion
   console.log("\n--- 8. In-App Notification Center ---");
@@ -284,6 +358,18 @@ const runSuite = async () => {
   });
   assert(notifBatch.status === 200 && typeof notifBatch.body.deletedCount === "number", "Student successfully batch deletes notifications");
 
+  // Bulk action: Clear all remaining notifications
+  const clearAllNotifs = await req("/api/notifications/clear-all", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${studentToken}` }
+  });
+  assert(clearAllNotifs.status === 200 && typeof clearAllNotifs.body.deletedCount === "number", "Student successfully clears all notifications via DELETE /clear-all");
+
+  const verifyEmptyNotifs = await req("/api/notifications", {
+    headers: { Authorization: `Bearer ${studentToken}` }
+  });
+  assert(verifyEmptyNotifs.status === 200 && verifyEmptyNotifs.body.total === 0, "Notification center confirmed empty (total: 0)");
+
   // 9. Campus Events
   console.log("\n--- 9. Campus Events & Registration ---");
   const events = await req("/api/events", {
@@ -298,6 +384,35 @@ const runSuite = async () => {
   });
   assert(registerEvent.status === 200 && typeof registerEvent.body.count === "number", "Student registers for campus workshop event");
 
+  // Campus Events Admin Lifecycle
+  const createEventRes = await req("/api/events", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${adminToken}` },
+    body: JSON.stringify({
+      title: "Annual Tech Symposium & Hackathon 2027",
+      description: "Keynote speeches and networking sessions with alumni.",
+      date: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+      location: "Main Auditorium",
+      type: "hackathon"
+    })
+  });
+  assert(createEventRes.status === 201 && createEventRes.body._id, "Admin successfully creates campus event");
+  const newEventId = createEventRes.body._id;
+
+  // Student forbidden from deleting event
+  const studentDelEvent = await req(`/api/events/${newEventId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${studentToken}` }
+  });
+  assert(studentDelEvent.status === 403, "Student is forbidden (HTTP 403) from deleting campus event");
+
+  // Admin deletes event
+  const adminDelEvent = await req(`/api/events/${newEventId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${adminToken}` }
+  });
+  assert(adminDelEvent.status === 200, "Admin successfully deletes campus event (HTTP 200)");
+
   // 10. AI Career Suite Fallback & Operation
   console.log("\n--- 10. AI Career Suite ---");
   const skillAnalysis = await req("/api/ai/analyze-skills", {
@@ -306,6 +421,17 @@ const runSuite = async () => {
     body: JSON.stringify({ skills: ["JavaScript", "React", "Node.js"] })
   });
   assert(skillAnalysis.status === 200 && Array.isArray(skillAnalysis.body.missingSkills) && skillAnalysis.body.roadmap, "AI skill analysis returns career counseling roadmap (offline fallback operational)");
+
+  const roadmapRes = await req("/api/ai/roadmap", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${studentToken}` },
+    body: JSON.stringify({
+      goal: "Full Stack Engineer",
+      currentSkills: ["JavaScript", "React"],
+      timeframe: "6 months"
+    })
+  });
+  assert(roadmapRes.status === 200 && Array.isArray(roadmapRes.body.phases) && roadmapRes.body.phases.length >= 2, "AI personalized roadmap generates structured career learning phases");
 
   const mockStart = await req("/api/ai/mock-interview/start", {
     method: "POST",
