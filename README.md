@@ -6,7 +6,7 @@
 [![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-green.svg)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/Database-MongoDB%20v7-brightgreen.svg)](https://www.mongodb.com/)
 [![WebSockets](https://img.shields.io/badge/Realtime-Socket.io-black.svg)](https://socket.io/)
-[![Tests](https://img.shields.io/badge/Tests-35%2F35%20Passing-success.svg)](./tests/api_verification.mjs)
+[![Tests](https://img.shields.io/badge/Tests-49%2F49%20Passing-success.svg)](./tests/api_verification.mjs)
 [![Documentation](https://img.shields.io/badge/Docs-Complete%20Architecture%20%26%20Audit-blue.svg)](./docs/)
 
 ---
